@@ -1,11 +1,12 @@
 import { createWeb3Modal, defaultWagmiConfig } from "@web3modal/wagmi/react";
-
+import dotenv from "dotenv";
 import { WagmiConfig } from "wagmi";
 import { polygon } from "wagmi/chains";
 import ConnectButton from "./components/ConnectButton";
-
+dotenv.config();
+const PID = process.env.PID!;
 // 1. Get projectId
-const projectId = "0b246600617a2d21e8f6ff104f2c131c";
+const projectId = PID;
 
 // 2. Create wagmiConfig
 const metadata = {
