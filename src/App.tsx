@@ -1,14 +1,20 @@
 import { createWeb3Modal, defaultWagmiConfig } from "@web3modal/wagmi/react";
-import dotenv from "dotenv";
-import { WagmiConfig } from "wagmi";
+
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { polygon } from "wagmi/chains";
 import ConnectButton from "./components/ConnectButton";
-dotenv.config();
-const PID = process.env.PID!;
+import { publicProvider } from "wagmi/providers/public";
+import { walletConnectProvider } from "@web3modal/wagmi";
+import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+const PID = import.meta.env.VITE_PID;
 // 1. Get projectId
 const projectId = PID;
 
 // 2. Create wagmiConfig
+const { chains, publicClient } = configureChains(
+  [polygon],
+  [walletConnectProvider({ projectId }), publicProvider()]
+);
 const metadata = {
   name: "Web3Modal",
   description: "Web3Modal Example",
@@ -16,8 +22,16 @@ const metadata = {
   icons: ["https://avatars.githubusercontent.com/u/37784886"],
 };
 
-const chains = [polygon];
-const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata });
+const wagmiConfig = createConfig({
+  autoConnect: true,
+  connectors: [
+    new WalletConnectConnector({
+      chains,
+      options: { projectId, showQrModal: false, metadata },
+    }),
+  ],
+  publicClient,
+});
 
 // 3. Create modal
 createWeb3Modal({ wagmiConfig, projectId, chains, defaultChain: polygon });
