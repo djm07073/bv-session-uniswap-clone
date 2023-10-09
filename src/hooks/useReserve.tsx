@@ -1,0 +1,38 @@
+import { useContractRead } from "wagmi";
+import { FACTORY, USDC, WMATIC } from "../App";
+import FACTORY_ABI from "../abi/factory.json";
+import PAIR_ABI from "../abi/pair.json";
+export default function useReserve(
+  isMatic: boolean,
+  token0: `0x${string}`,
+  token1: `0x${string}`
+): {
+  reserveIn: bigint;
+  reserveOut: bigint;
+} {
+  const { data: pair } = useContractRead({
+    address: FACTORY,
+    abi: FACTORY_ABI,
+    functionName: "getPair",
+    args: [token0, token1],
+  });
+
+  const { data: reserve } = useContractRead({
+    address: pair! as `0xstring`,
+    abi: PAIR_ABI,
+    functionName: "getReserves",
+  });
+
+  const { reserveIn, reserveOut } =
+    isMatic === true && WMATIC < USDC
+      ? {
+          reserveIn: (reserve as bigint[])![0],
+          reserveOut: (reserve as bigint[])![1],
+        }
+      : {
+          reserveIn: (reserve as bigint[])![1],
+          reserveOut: (reserve as bigint[])![0],
+        };
+
+  return { reserveIn, reserveOut };
+}
