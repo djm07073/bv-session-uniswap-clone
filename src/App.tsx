@@ -1,10 +1,8 @@
-import { createWeb3Modal, defaultWagmiConfig } from "@web3modal/wagmi/react";
-
+import { createWeb3Modal } from "@web3modal/wagmi/react";
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { polygon } from "wagmi/chains";
 import ConnectButton from "./components/ConnectButton";
-import { publicProvider } from "wagmi/providers/public";
-import { walletConnectProvider } from "@web3modal/wagmi";
+
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { InjectedConnector } from "wagmi/connectors/injected";
