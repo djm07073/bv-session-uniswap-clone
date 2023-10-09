@@ -1,30 +1,52 @@
-import { createWeb3Modal, defaultWagmiConfig } from "@web3modal/wagmi/react";
-import { WagmiConfig } from "wagmi";
+import { createWeb3Modal } from "@web3modal/wagmi/react";
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { polygon } from "wagmi/chains";
 import ConnectButton from "./components/ConnectButton";
 import Swap from "./components/Swap";
 import AddLiquidity from "./components/AddLiquidity";
 import WithdrawLiquidity from "./components/WithdrawLiquidity";
+import { alchemyProvider } from "wagmi/providers/alchemy";
+
+import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+import { InjectedConnector } from "wagmi/connectors/injected";
 export const ROUTER02 = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
 export const FACTORY = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
 export const USDC = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 export const WMATIC = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
 // 1. Get projectId
 const projectId = "501269758a220a5479dec5ff5ecfdcf6"; //TODO:Project ID 넣어주세요
+const ALCHEMY_KEY = "rVZP95j4_ekDDHNnhbxpS2dlK7lTKu2g";
 // 2. Create wagmiConfig
 const metadata = {
   name: "Web3Modal",
-  description: "UniswapV2",
+  description: "uniswapv2-clone",
   url: "https://web3modal.com",
   icons: ["https://avatars.githubusercontent.com/u/37784886"],
 };
 
-const chains = [polygon];
-
-const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata });
+const { chains, publicClient } = configureChains(
+  [polygon],
+  [alchemyProvider({ apiKey: ALCHEMY_KEY })]
+);
+const wagmiConfig = createConfig({
+  autoConnect: true,
+  connectors: [
+    new WalletConnectConnector({
+      chains,
+      options: { projectId, showQrModal: false, metadata },
+    }),
+    new InjectedConnector({ chains, options: { shimDisconnect: true } }),
+  ],
+  publicClient,
+});
 
 // 3. Create modal
-createWeb3Modal({ wagmiConfig, projectId, chains, defaultChain: polygon });
+createWeb3Modal({
+  wagmiConfig,
+  projectId,
+  chains,
+  defaultChain: polygon,
+});
 
 export default function App() {
   return (

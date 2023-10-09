@@ -1,42 +1,44 @@
 import { ChangeEvent, useEffect, useState } from "react";
-import { useAccount, useBalance, useContractWrite } from "wagmi";
-import { ROUTER02, USDC, WMATIC } from "../App";
+import { useAccount, useBalance } from "wagmi";
+import { USDC, WMATIC } from "../App";
 import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
 import { AiOutlineDoubleRight } from "react-icons/ai";
 import useReserve from "../hooks/useReserve";
-import ROUTER_ABI from "../abi/router02.json";
+import useSwapWithETH from "../hooks/useSwapWithETH";
 export default function Swap() {
   const { isDisconnected } = useAccount();
   const [input, setInput] = useState<string>("");
   const [output, setOutput] = useState<string>("");
   const [outputMinimum, setOutputMinimum] = useState<string>("");
-  const [slippage, setSlippage] = useState<bigint>("");
+  const [slippage, setSlippage] = useState<bigint>(1n);
   const [usdcAmount, setUsdcAmount] = useState<bigint>(0n);
   const [isMatic, setIsMatic] = useState<boolean>(true);
+
   const { reserveIn, reserveOut } = useReserve(isMatic, USDC, WMATIC);
   const { data: usdcData } = useBalance({
     address: USDC,
   });
-  //   const {
-  //     isLoading: isLoadingSwapExactTokensForETH,
-  //     isSuccess,
-  //     write: swapExactTokensForETH,
-  //   } = useContractWrite({
-  //     address: ROUTER02,
-  //     abi: ROUTER_ABI,
-  //     functionName: "swapExactTokensForETH",
-  //     args: [],
-  //   });
-  //   const {
-  //     isLoading: isLoadingSwapExactETHForTokens,
-  //     isSuccess,
-  //     write: swapExactETHForTokens,
-  //   } = useContractWrite({
-  //     address: ROUTER02,
-  //     abi: ROUTER_ABI,
-  //     functionName: "swapExactETHForTokens",
-  //     args: [],
-  //   });
+  //* Custom Hook for Signing*/
+  const {
+    isApproveLoading,
+    isApproveSuccessing,
+    approve,
+    approveNeed,
+    isLoadingSwapExactETHForTokens,
+    isSuccessSwapExactETHForTokens,
+    swapExactETHForTokens,
+    isLoadingSwapExactTokensForETH,
+    isSuccessSwapExactTokensForETH,
+    swapExactTokensForETH,
+  } = useSwapWithETH(
+    input,
+    outputMinimum,
+    isMatic, // true -> swapExactETHForTokens, MATIC -> USDC, false -> swapExactTokensForETH,  USDC -> MATIC
+    USDC,
+    6
+  ); // FOR: swapExactETHForTokens, // USDC -> MATIC
+
+  /** Calculate Amount Out function */
   const getAmountOut = async (
     amountIn: bigint,
     reserveIn: bigint,
@@ -48,7 +50,7 @@ export default function Swap() {
 
     return reserveOut - numerator / denominator;
   };
-
+  /** Get USDC amount  */
   useEffect(() => {
     if (usdcData!.value) {
       setUsdcAmount(usdcData!.value);
@@ -72,7 +74,6 @@ export default function Swap() {
     );
   };
 
-  const handleSwap = () => {};
   return (
     <div>
       {/* MATIC 양 입력 , 받게 될 USDC 계산됨*/}
@@ -110,32 +111,61 @@ export default function Swap() {
           onChange={handleInput}
           value={input}
         />
-        <div>
+        <div className="flex flex-col space-x-5">
           <div className="text-2xl font-sans">
             0.3% 수수료 빼고 너 이정도 받을듯?
           </div>
 
-          <div>Output: {output}</div>
-          <div>Output Minimum: {outputMinimum}</div>
-          <input
-            type="number"
-            placeholder="slippage <= 10%"
-            onChange={(event) => {
-              if (Number(event.target.value) >= 10) {
-                setSlippage(10n);
-              } else {
-                setSlippage(BigInt(event.target.value));
-              }
-            }}
-            value={slippage.toString()}
-          />
+          <div className="text-2xl font-sans">Output: {output}</div>
+          <div className="text-2xl font-sans">
+            Output Minimum: {outputMinimum}
+          </div>
+          <div className="flex flex-row space-x-4">
+            <div>슬리피지 설정 해봐😛 기본적으로 1%로 설정되어있어</div>
+            <input
+              type="number"
+              placeholder="slippage <= 10%"
+              onChange={(event) => {
+                if (Number(event.target.value) >= 10) {
+                  setSlippage(10n);
+                } else {
+                  setSlippage(BigInt(event.target.value));
+                }
+              }}
+              value={slippage.toString()}
+            />
+          </div>
         </div>
       </div>
       {/* Swap*/}
       <div>
-        <button onClick={handleSwap}>Swap</button>
-        {/* swapExactTokensForETH, // USDC -> MATIC */}
+        {isMatic ? (
+          <button onClick={() => swapExactETHForTokens()}>
+            Swap
+            {isLoadingSwapExactETHForTokens ? <div>...</div> : <div></div>}
+            {isSuccessSwapExactETHForTokens ? <div>성공!</div> : <div></div>}
+          </button>
+        ) : approveNeed ? (
+          <button
+            onClick={() => {
+              approve();
+            }}
+          >
+            Approve{isApproveLoading ? <div>...</div> : <div></div>}
+            {isApproveSuccessing ? <div>성공!</div> : <div></div>}
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              swapExactTokensForETH();
+            }}
+          >
+            Swap{isLoadingSwapExactTokensForETH ? <div>...</div> : <div></div>}
+            {isSuccessSwapExactTokensForETH ? <div>성공!</div> : <div></div>}
+          </button>
+        )}
 
+        {/* swapExactTokensForETH, // USDC -> MATIC */}
         {/* swapETHForExactTokens, // MATIC -> USDC */}
       </div>
     </div>
