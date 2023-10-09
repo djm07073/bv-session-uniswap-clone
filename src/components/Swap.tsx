@@ -1,12 +1,12 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { USDC, WMATIC } from "../App";
-import { formatUnits, parseEther } from "viem";
+import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
 import { AiOutlineDoubleRight } from "react-icons/ai";
 import useReserve from "../hooks/useReserve";
 export default function Swap() {
   const { isDisconnected } = useAccount();
-  const [input, setInput] = useState<bigint>(0n);
+  const [input, setInput] = useState<string>("");
   const [output, setOutput] = useState<string>("");
   const [usdcAmount, setUsdcAmount] = useState<bigint>(0n);
   const [isMatic, setIsMatic] = useState<boolean>(true);
@@ -19,11 +19,13 @@ export default function Swap() {
     reserveIn: bigint,
     reserveOut: bigint
   ) => {
-    const amountInWithFee = amountIn * 997n;
-    const numerator = amountInWithFee * reserveOut;
-    const denominator = reserveIn * 1000n + amountInWithFee;
-    return numerator / denominator;
+    const numerator = 1000n * reserveIn * reserveOut;
+
+    const denominator = 1000n * reserveIn + 997n * amountIn;
+
+    return reserveOut - numerator / denominator;
   };
+
   useEffect(() => {
     if (usdcData!.value) {
       setUsdcAmount(usdcData!.value);
@@ -31,14 +33,14 @@ export default function Swap() {
   }, [usdcData]);
 
   const handleInput = async (event: ChangeEvent<HTMLInputElement>) => {
-    const input = parseEther(event.target.value);
-    setInput(input);
+    const value = event.target.value;
+    setInput(value);
+    const input = isMatic ? parseEther(value) : parseUnits(value, 6);
     const amountOut = await getAmountOut(input, reserveIn, reserveOut);
-
     if (isMatic) {
       setOutput(formatUnits(amountOut, 6));
     } else {
-      setOutput(formatUnits(amountOut, 18));
+      setOutput(formatEther(amountOut));
     }
   };
   const handleDirection = () => {
@@ -71,12 +73,21 @@ export default function Swap() {
       <div>
         <input
           type="number"
-          placeholder="MATIC Amount"
+          placeholder={isMatic ? "MATIC Amount" : "USDC Amount"}
           onChange={handleInput}
+          value={input}
         />
-        <div>{output}</div>
+        <div>
+          <div className="text-2xl font-sans">
+            0.3% 수수료 빼고 너 이정도 받을듯?
+          </div>
+
+          <div>{output}</div>
+        </div>
       </div>
       {/* Call SwapWith*/}
+      {/* swapExactTokensForETH, // USDC -> MATIC */}
+      {/* swapETHForExactTokens, // MATIC -> USDC */}
     </div>
   );
 }
