@@ -13,8 +13,8 @@ export default function useSwapWithETH(
 ) {
   let approveNeed: boolean;
   const { address } = useAccount();
-  const tokenIn = isTokenInNative ? tokenInOrOut : WMATIC;
-  const tokenOut = isTokenInNative ? WMATIC : tokenInOrOut;
+  const tokenIn = isTokenInNative ? WMATIC : tokenInOrOut;
+  const tokenOut = isTokenInNative ? tokenInOrOut : WMATIC;
   const {
     isSuccess: isSuccessSwapExactETHForTokens,
     isLoading: isLoadingSwapExactETHForTokens,
