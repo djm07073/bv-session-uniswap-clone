@@ -49,7 +49,7 @@ createWeb3Modal({
 
 export default function App() {
   return (
-    <div className="flex flex-col mt-10 justify-center items-center">
+    <div className="flex flex-col mt-10 items-center">
       {" "}
       {/* 가운데 정렬 */}
       <h1 className="text-4xl font-mono">

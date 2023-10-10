@@ -3,6 +3,7 @@ import { ChangeEvent, useState } from "react";
 import { USDC, WMATIC } from "../App";
 import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
 import { BiSolidHandDown } from "react-icons/bi";
+import { MdSwapVert } from "react-icons/md";
 import useReserve from "../hooks/useReserve";
 import useSwapWithETH from "../hooks/useSwapWithETH";
 /** Calculate Amount Out function */
@@ -56,26 +57,13 @@ export default function Swap() {
     setInput(value);
     handleOutput(value);
   };
-  const handleOutput = (value: string) => {
-    const amountIn = isMatic ? parseEther(value) : parseUnits(value, 6);
-    const amountOut = getAmountOut(amountIn, reserveIn, reserveOut);
-    if (isMatic) {
-      setOutput(formatUnits(amountOut, 6));
-    } else {
-      setOutput(formatEther(amountOut));
-    }
-    const newSlippage = slippage === 0n ? 1n : slippage;
-    setOutputMinimum(
-      isMatic
-        ? formatUnits(amountOut - (amountOut * newSlippage) / 100n, 6)
-        : formatEther(amountOut - (amountOut * newSlippage) / 100n)
-    );
-  };
-  const handleToggle = () => {
-    const newIsMatic = !isMatic;
-    setIsMatic(newIsMatic);
-    const amountIn = newIsMatic ? parseEther(input) : parseUnits(input, 6);
-    const amountOut = getAmountOut(amountIn, reserveOut, reserveIn);
+  const handleOutput = (value: string, isToggle?: boolean) => {
+    const newIsMatic = isToggle === undefined ? isMatic : !isMatic;
+    const amountIn = newIsMatic ? parseEther(value) : parseUnits(value, 6);
+    const amountOut =
+      newIsMatic === isMatic
+        ? getAmountOut(amountIn, reserveIn, reserveOut)
+        : getAmountOut(amountIn, reserveOut, reserveIn);
     if (newIsMatic) {
       setOutput(formatUnits(amountOut, 6));
     } else {
@@ -88,8 +76,18 @@ export default function Swap() {
         : formatEther(amountOut - (amountOut * newSlippage) / 100n)
     );
   };
+  const handleToggle = () => {
+    setIsMatic(!isMatic);
+    handleOutput(input, true);
+  };
   return (
-    <div className="flex flex-col items-center justify-center p-4">
+    <div className="flex flex-col items-center  p-4">
+      <div className="flex flex-row w-full items-end">
+        <MdSwapVert
+          className="w-8 h-8 hover:text-yellow-500 cursor-pointer hover:scale-125 transition-transform duration-300 ease-in-out ml-auto"
+          onClick={handleToggle}
+        />
+      </div>
       {isMatic ? (
         <div className="flex flex-col  justify-center items-center mt-4">
           <div className="flex flex-row items-center space-x-4 mt-4 w-80 border-4 border-black p-2">
@@ -107,10 +105,7 @@ export default function Swap() {
             />
           </div>
 
-          <BiSolidHandDown
-            className="w-12 h-12 mt-4 hover:text-yellow-500 cursor-pointer hover:scale-125 transition-transform duration-300 ease-in-out"
-            onClick={handleToggle}
-          />
+          <BiSolidHandDown className="w-12 h-12 mt-4 hover:text-yellow-500 cursor-pointer hover:scale-125 transition-transform duration-300 ease-in-out" />
 
           <div className="flex flex-row items-center space-x-4 mt-4 w-80 border-4 border-black p-2">
             <img
@@ -139,10 +134,7 @@ export default function Swap() {
               className="border-2 rounded p-2 w-40"
             />
           </div>
-          <BiSolidHandDown
-            className="w-12 h-12 mt-4 hover:text-yellow-500 cursor-pointer hover:scale-125 transition-transform duration-300 ease-in-out"
-            onClick={handleToggle}
-          />
+          <BiSolidHandDown className="w-12 h-12 mt-4 hover:text-yellow-500 cursor-pointer hover:scale-125 transition-transform duration-300 ease-in-out" />
           <div className="flex flex-row items-center space-x-4 mt-4 w-80 border-4 border-black p-2">
             <img
               className="w-12 h-12"
